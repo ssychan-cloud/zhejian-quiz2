@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>經典小學堂：《折箭》大挑戰！</title>
+    <!-- 引入 Tailwind CSS 以建立響應式排版 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入適合繁體中文閱讀的圓潤字體 Noto Sans TC -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 全局字體與背景樣式 */
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #FEF9E7 0%, #FDEBD0 50%, #E8F8F5 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* 遊戲卡片立體陰影與動畫 */
+        .game-card {
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 12px 32px rgba(211, 84, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.05);
+            border: 4px solid #F8C471;
+            transition: all 0.3s ease;
+        }
+
+        /* 選項按鈕立體按壓效果 */
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 5px 0 #D5DBDB;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 0 #F5B041;
+            border-color: #F5B041;
+            background-color: #FEF9E7;
+        }
+        .option-btn:active:not(:disabled) {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #D5DBDB;
+        }
+
+        /* 答對與待加強狀態樣式 */
+        .option-correct {
+            background-color: #D4EFDF !important;
+            border-color: #27AE60 !important;
+            box-shadow: 0 5px 0 #27AE60 !important;
+            color: #145A32 !important;
+        }
+        .option-retry {
+            background-color: #FCF3CF !important;
+            border-color: #F1C40F !important;
+            box-shadow: 0 5px 0 #F1C40F !important;
+            opacity: 0.75;
+        }
+
+        /* 飄浮與彈跳動畫 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            70% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* 彩帶粒子效果 */
+        .confetti {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            pointer-events: none;
+            z-index: 50;
+            animation: fall linear forwards;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-3 sm:p-6">
+
+    <!-- 頂部裝飾與音效開關 -->
+    <div class="w-full max-w-3xl flex justify-between items-center mb-3 px-2">
+        <div class="flex items-center gap-2 bg-white/80 backdrop-blur px-4 py-1.5 rounded-full border-2 border-amber-300 shadow-sm">
+            <span class="text-xl">🏫</span>
+            <span class="font-bold text-amber-800 text-sm sm:text-base">小學四年級・中華文化互動學習</span>
+        </div>
+        <button id="soundToggleBtn" onclick="toggleSound()" class="flex items-center gap-1.5 bg-white hover:bg-amber-50 text-amber-800 font-bold px-3.5 py-1.5 rounded-full border-2 border-amber-300 shadow-sm transition cursor-pointer" title="開關音效">
+            <span id="soundIcon" class="text-lg">🔊</span>
+            <span id="soundText" class="text-xs sm:text-sm">音效開啟</span>
+        </button>
+    </div>
+
+    <!-- 主遊戲容器 -->
+    <main class="w-full max-w-3xl game-card rounded-3xl p-5 sm:p-8 relative overflow-hidden">
+        
+        <!-- ==================== 畫面 1：歡迎頁面 ==================== -->
+        <section id="startScreen" class="text-center py-4 animate-pop">
+            <!-- 經典小學堂徽章 -->
+            <div class="inline-block bg-purple-700 text-white font-black text-lg sm:text-xl px-6 py-2 rounded-2xl shadow-md mb-4 tracking-widest border-2 border-purple-300">
+                經 典 小 學 堂
+            </div>
+
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-amber-900 mb-3 leading-tight">
+                《折箭》智慧大挑戰！
+            </h1>
+            <p class="text-base sm:text-lg text-orange-700 font-bold mb-6">
+                ✨ 探索南北朝故事與歷史小檔案，收集「金箭獎章」！ ✨
+            </p>
+
+            <!-- SVG 可愛箭束插圖 -->
+            <div class="flex justify-center my-4 animate-float">
+                <svg width="210" height="130" viewBox="0 0 210 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 背景光圈 -->
+                    <circle cx="105" cy="65" r="58" fill="#FEF5E7" stroke="#F8C471" stroke-width="3" stroke-dasharray="6 4"/>
+                    <!-- 束在一起的箭（象徵團結） -->
+                    <g transform="rotate(-12 105 65)">
+                        <!-- 箭桿 -->
+                        <rect x="35" y="54" width="130" height="6" rx="3" fill="#D35400"/>
+                        <rect x="30" y="62" width="140" height="7" rx="3.5" fill="#E67E22"/>
+                        <rect x="35" y="71" width="130" height="6" rx="3" fill="#BA4A00"/>
+                        <!-- 箭頭 -->
+                        <polygon points="175,65.5 156,53 160,65.5 156,78" fill="#5D6D7E"/>
+                        <polygon points="168,55 152,46 155,55" fill="#85929E"/>
+                        <polygon points="168,76 152,85 155,76" fill="#85929E"/>
+                        <!-- 箭羽 -->
+                        <polygon points="32,65.5 18,52 38,54 45,65.5 38,77 18,79" fill="#1ABC9C"/>
+                        <polygon points="36,54 24,44 42,46 48,54" fill="#F1C40F"/>
+                        <polygon points="36,77 24,87 42,85 48,77" fill="#F1C40F"/>
+                        <!-- 團結金色絲帶束緊 -->
+                        <rect x="96" y="49" width="14" height="33" rx="4" fill="#F1C40F" stroke="#B7950B" stroke-width="2"/>
+                        <circle cx="103" cy="65.5" r="4" fill="#E74C3C"/>
+                    </g>
+                    <!-- 閃亮星星裝飾 -->
+                    <path d="M168 25L171 32L178 35L171 38L168 45L165 38L158 35L165 32L168 25Z" fill="#F1C40F"/>
+                    <path d="M40 22L42 27L47 29L42 31L40 36L38 31L33 29L38 27L40 22Z" fill="#1ABC9C"/>
+                </svg>
+            </div>
+
+            <!-- 故事小重溫卡片 -->
+            <div class="bg-amber-50/90 border-2 border-amber-200 rounded-2xl p-4 sm:p-5 text-left max-w-xl mx-auto mb-6 shadow-inner">
+                <h2 class="font-bold text-amber-900 text-base sm:text-lg mb-2 flex items-center gap-2">
+                    <span>📖</span> <span>挑戰前小重溫：</span>
+                </h2>
+                <p class="text-gray-700 text-sm sm:text-base leading-relaxed">
+                    南北朝時期，吐谷渾國王<strong class="text-orange-700">阿豺</strong>叫弟弟<strong class="text-orange-700">慕利延</strong>折箭：一枝箭輕易折斷，但<strong class="text-teal-700">十九枝箭合在一起</strong>卻怎麼也折不斷！原來，這背後藏著一個超重要的道理，還有史學家<strong class="text-teal-700">魏收</strong>的小檔案等著你來挑戰！
+                </p>
+            </div>
+
+            <button onclick="startGame()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xl sm:text-2xl px-10 py-4 rounded-2xl shadow-lg transform transition hover:scale-105 active:scale-95 cursor-pointer border-b-4 border-orange-700">
+                🏹 準備好了！開始挑戰
+            </button>
+        </section>
+
+        <!-- ==================== 畫面 2：問答進行頁面 ==================== -->
+        <section id="quizScreen" class="hidden">
+            <!-- 頂部進度與金箭獎章計數 -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b-2 border-amber-100">
+                <div class="flex items-center gap-2">
+                    <span id="questionBadge" class="bg-teal-600 text-white font-bold px-3.5 py-1 rounded-xl text-sm sm:text-base shadow-sm">
+                        第 1 / 4 題
+                    </span>
+                    <span id="categoryTag" class="bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-xl text-xs sm:text-sm">
+                        情節理解
+                    </span>
+                </div>
+
+                <!-- 金箭獎章展示區 -->
+                <div class="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-300">
+                    <span class="text-xs sm:text-sm font-bold text-amber-900">金箭獎章：</span>
+                    <div id="arrowBadges" class="flex gap-1 text-lg sm:text-xl">
+                        <span class="opacity-30 grayscale transition-all duration-300" id="badge-0">🏹</span>
+                        <span class="opacity-30 grayscale transition-all duration-300" id="badge-1">🏹</span>
+                        <span class="opacity-30 grayscale transition-all duration-300" id="badge-2">🏹</span>
+                        <span class="opacity-30 grayscale transition-all duration-300" id="badge-3">🏹</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 進度條 -->
+            <div class="w-full bg-gray-200 rounded-full h-3 mb-6 overflow-hidden">
+                <div id="progressBar" class="bg-gradient-to-r from-teal-400 to-emerald-500 h-3 rounded-full transition-all duration-500" style="width: 25%"></div>
+            </div>
+
+            <!-- 問題卡片區 -->
+            <div id="questionContainer" class="animate-pop">
+                <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-l-8 border-orange-400 rounded-2xl p-4 sm:p-6 mb-6 shadow-sm">
+                    <h2 id="questionText" class="text-lg sm:text-2xl font-bold text-gray-800 leading-snug">
+                        題目載入中...
+                    </h2>
+                </div>
+
+                <!-- 選項列表 -->
+                <div id="optionsGrid" class="grid grid-cols-1 gap-3.5 sm:gap-4">
+                    <!-- 動態生成選項按鈕 -->
+                </div>
+            </div>
+
+            <!-- 正向鼓勵回饋區（答題後顯示） -->
+            <div id="feedbackBox" class="hidden mt-6 rounded-2xl p-5 border-2 transition-all animate-pop">
+                <div class="flex items-start gap-3 sm:gap-4">
+                    <div id="feedbackEmoji" class="text-4xl sm:text-5xl flex-shrink-0">🌟</div>
+                    <div class="flex-1">
+                        <h3 id="feedbackTitle" class="text-lg sm:text-xl font-black mb-1">太棒了！</h3>
+                        <p id="feedbackMessage" class="text-sm sm:text-base leading-relaxed font-medium"></p>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <button id="nextBtn" onclick="nextQuestion()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-base sm:text-lg px-7 py-2.5 rounded-xl shadow-md transition transform hover:scale-105 cursor-pointer border-b-4 border-teal-800">
+                        下一題 ➔
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 畫面 3：結算與嘉許狀頁面 ==================== -->
+        <section id="resultScreen" class="hidden text-center py-4 animate-pop">
+            <div class="inline-block bg-amber-400 text-amber-950 font-black px-5 py-1.5 rounded-full text-sm sm:text-base mb-3 shadow-sm">
+                🎉 挑戰大成功！學習嘉許狀 🎉
+            </div>
+
+            <h2 id="resultRankTitle" class="text-3xl sm:text-4xl font-black text-teal-800 mb-2">
+                智慧團結小先鋒！
+            </h2>
+            <p id="resultEncouragement" class="text-base sm:text-lg text-gray-700 font-bold mb-5">
+                你真是太厲害了！完全掌握了《折箭》與歷史小檔案的知識！
+            </p>
+
+            <!-- 獲得金箭獎章展示框 -->
+            <div class="bg-gradient-to-b from-amber-50 to-orange-100 border-4 border-amber-300 rounded-3xl p-5 sm:p-6 max-w-md mx-auto mb-6 shadow-md">
+                <p class="text-amber-900 font-bold text-sm sm:text-base mb-2">你一共收集了</p>
+                <div id="finalArrowsDisplay" class="flex justify-center gap-3 text-4xl sm:text-5xl my-3">
+                    <!-- 動態生成金箭 -->
+                </div>
+                <p id="finalScoreText" class="text-xl sm:text-2xl font-black text-orange-700">
+                    4 / 4 枝金箭獎章！
+                </p>
+            </div>
+
+            <!-- 經典金句重溫卡片 -->
+            <div class="bg-teal-50 border-2 border-teal-200 rounded-2xl p-4 sm:p-5 max-w-xl mx-auto mb-6 text-left">
+                <div class="flex items-center gap-2 text-teal-800 font-black text-base sm:text-lg mb-1.5">
+                    <span>💡</span> <span>經典小學堂・智慧錦囊</span>
+                </div>
+                <p class="text-teal-900 font-bold text-base sm:text-lg mb-1">
+                    「力量分散容易折損，團結一致就難被摧毀。」
+                </p>
+                <p class="text-teal-700 text-sm sm:text-base">
+                    希望你在學校和家裡，也能與同學、兄弟姊妹同心協力，發揮「團結就是力量」的精神！
+                </p>
+            </div>
+
+            <button onclick="restartGame()" class="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-black text-lg sm:text-xl px-8 py-3.5 rounded-2xl shadow-lg transform transition hover:scale-105 active:scale-95 cursor-pointer border-b-4 border-teal-800">
+                🔄 再玩一次，鞏固記憶
+            </button>
+        </section>
+
+    </main>
+
+    <!-- 頁尾小提示 -->
+    <footer class="mt-4 text-center text-xs sm:text-sm text-amber-800/70 font-medium">
+        內容取材自小學中國語文／中華文化讀本《折箭｜魏收》
+    </footer>
+
+    <script>
+        // ==================== 題庫資料（緊扣圖片課文內容，適合香港小四學生） ====================
+        const quizData = [
+            {
+                category: "📖 情節理解",
+                question: "吐谷渾國王阿豺臨終前，叫弟弟慕利延折箭。為什麼慕利延第二次沒辦法把餘下的十九枝箭折斷？",
+                options: [
+                    { label: "A", text: "因為他剛才折第一枝箭已經用光所有力氣了" },
+                    { label: "B", text: "因為十九枝箭聚在一起，力量集中，很難被折斷" },
+                    { label: "C", text: "因為那十九枝箭是用堅硬的鐵鑄造而成的" },
+                    { label: "D", text: "因為慕利延不想聽哥哥阿豺的吩咐" }
+                ],
+                correctIndex: 1,
+                hint: "💡 小提示：想想看，一枝箭很單薄，但十九枝箭綁在一起會變得怎樣呢？再試一次吧！",
+                praise: "答對了！你觀察得真仔細！🌟",
+                explanation: "一枝箭力量分散，所以輕易就折斷；但十九枝箭合在一起，力量集中起來，就算慕利延使出全身力氣也折不斷呢！"
+            },
+            {
+                category: "🌟 經典小學堂",
+                question: "「經典小學堂」中，《折箭》這個故事最主要想告訴我們什麼道理？",
+                options: [
+                    { label: "A", text: "射箭需要每天勤加練習才能成為神射手" },
+                    { label: "B", text: "兄弟之間應該經常比賽誰的力氣比較大" },
+                    { label: "C", text: "團結就是力量，大家同心一致就難被摧毀" },
+                    { label: "D", text: "國王應該把所有的弓箭都留給弟弟保管" }
+                ],
+                correctIndex: 2,
+                hint: "💡 小提示：看看課文左上角橙色的重點句子：「這個故事告訴我們『〇〇就是力量』的道理。」再選一次看看！",
+                praise: "太棒了！你完全領悟了故事的核心道理！🎯",
+                explanation: "阿豺正是想用折箭告誡眾人：「力量分散容易折損，團結一致就難被摧毀；同心為國效力，國家才會穩固。」"
+            },
+            {
+                category: "📜 魏收小檔案",
+                question: "根據課本右邊的「魏收小檔案」，南北朝時期的魏收是什麼人物，並曾奉命編寫哪一部史書？",
+                options: [
+                    { label: "A", text: "著名的將軍，曾奉命編寫《孫子兵法》" },
+                    { label: "B", text: "歷史學家、文學家，曾奉命編寫《魏書》" },
+                    { label: "C", text: "吐谷渾的國王，曾奉命編寫《折箭記》" },
+                    { label: "D", text: "古代的發明家，發明了堅固的弓箭" }
+                ],
+                correctIndex: 1,
+                hint: "💡 小提示：魏收穿著藍色長袍，他是南北朝時期的歷史學家和文學家，書名裡有他的姓氏喔！",
+                praise: "好記性！連「魏收小檔案」的細節也難不倒你！📚",
+                explanation: "魏收是南北朝時期著名的歷史學家、文學家，他曾奉命編寫重要史書《魏書》，為後人保存了珍貴的歷史紀錄！"
+            },
+            {
+                category: "🤝 生活實踐",
+                question: "就像課本最後問大家的：在學校裡，同學之間怎樣做才真正稱得上是「團結」？",
+                options: [
+                    { label: "A", text: "小組專題研習時，大家分工合作、互相幫助" },
+                    { label: "B", text: "測驗考試時，偷偷把答案紙傳給好朋友抄寫" },
+                    { label: "C", text: "自己把整份小組工作做完，不讓其他組員參與" },
+                    { label: "D", text: "看到同學遇到困難時，站在旁邊取笑他" }
+                ],
+                correctIndex: 0,
+                hint: "💡 小提示：真正的「團結」是大家一起付出、正面地互相支持喔！再挑一個最棒的做法吧！",
+                praise: "滿分表現！你一定是班裡最受歡迎的團結小天使！💖",
+                explanation: "真正的團結是大家發揮所長、分工合作，在同學遇到困難時伸出援手，一起朝著共同的目標努力！"
+            }
+        ];
+
+        // ==================== 遊戲狀態變數 ====================
+        let currentQuestionIndex = 0;
+        let goldenArrowsEarned = 0;
+        let firstTrySuccess = true;
+        let questionAnswered = false;
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        // ==================== Web Audio API 合成音效（無需外部音檔） ====================
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            const text = document.getElementById('soundText');
+            if (soundEnabled) {
+                icon.textContent = '🔊';
+                text.textContent = '音效開啟';
+                playTone(523.25, 0.1, 'sine');
+            } else {
+                icon.textContent = '🔇';
+                text.textContent = '音效靜音';
+            }
+        }
+
+        function playTone(freq, duration, type = 'sine', delay = 0) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+                
+                gain.gain.setValueAtTime(0.18, audioCtx.currentTime + delay);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(audioCtx.currentTime + delay);
+                osc.stop(audioCtx.currentTime + delay + duration);
+            } catch (e) {
+                // 忽略瀏覽器自動播放限制錯誤
+            }
+        }
+
+        // 答對歡快音效（大三和弦上行）
+        function playSuccessSound() {
+            playTone(523.25, 0.15, 'triangle', 0);      // C5
+            playTone(659.25, 0.15, 'triangle', 0.1);    // E5
+            playTone(783.99, 0.25, 'triangle', 0.2);    // G5
+            playTone(1046.50, 0.4, 'triangle', 0.32);   // C6
+        }
+
+        // 溫柔鼓勵提示音效（柔和雙音）
+        function playEncourageSound() {
+            playTone(440, 0.18, 'sine', 0);      // A4
+            playTone(493.88, 0.25, 'sine', 0.15); // B4
+        }
+
+        // 通關慶祝樂曲
+        function playFanfareSound() {
+            const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
+            const times = [0, 0.12, 0.24, 0.36, 0.55, 0.70];
+            notes.forEach((freq, idx) => {
+                playTone(freq, 0.25, 'triangle', times[idx]);
+            });
+        }
+
+        // ==================== 彩帶慶祝動畫 ====================
+        function launchConfetti() {
+            const colors = ['#F1C40F', '#E67E22', '#1ABC9C', '#E74C3C', '#9B59B6', '#3498DB'];
+            for (let i = 0; i < 36; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+                confetti.style.animationDuration = (Math.random() * 1.5 + 1.5) + 's';
+                document.body.appendChild(confetti);
+
+                setTimeout(() => {
+                    confetti.remove();
+                }, 3200);
+            }
+        }
+
+        // ==================== 遊戲流程控制 ====================
+        function startGame() {
+            initAudio();
+            playTone(587.33, 0.15, 'triangle');
+            currentQuestionIndex = 0;
+            goldenArrowsEarned = 0;
+
+            // 重置頂部獎章顯示
+            for (let i = 0; i < 4; i++) {
+                const badge = document.getElementById(`badge-${i}`);
+                badge.classList.add('opacity-30', 'grayscale');
+                badge.classList.remove('scale-125');
+            }
+
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            questionAnswered = false;
+            firstTrySuccess = true;
+
+            const q = quizData[currentQuestionIndex];
+            const total = quizData.length;
+
+            // 更新進度文字與進度條
+            document.getElementById('questionBadge').textContent = `第 ${currentQuestionIndex + 1} / ${total} 題`;
+            document.getElementById('categoryTag').textContent = q.category;
+            document.getElementById('progressBar').style.width = `${((currentQuestionIndex + 1) / total) * 100}%`;
+
+            // 隱藏上一題的回饋框
+            const feedbackBox = document.getElementById('feedbackBox');
+            feedbackBox.classList.add('hidden');
+
+            // 顯示題目並觸發進場動畫
+            const container = document.getElementById('questionContainer');
+            container.classList.remove('animate-pop');
+            void container.offsetWidth; // 強制重繪以重新播放動畫
+            container.classList.add('animate-pop');
+
+            document.getElementById('questionText').textContent = q.question;
+
+            // 生成四個選項按鈕
+            const optionsGrid = document.getElementById('optionsGrid');
+            optionsGrid.innerHTML = '';
+
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.id = `opt-btn-${index}`;
+                btn.className = 'option-btn w-full text-left bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 sm:gap-4 cursor-pointer';
+                btn.onclick = () => handleOptionSelect(index);
+
+                btn.innerHTML = `
+                    <span class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-100 text-amber-900 font-black text-lg flex items-center justify-center flex-shrink-0 border border-amber-300">
+                        ${opt.label}
+                    </span>
+                    <span class="text-base sm:text-lg font-bold text-gray-800 leading-snug">
+                        ${opt.text}
+                    </span>
+                `;
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function handleOptionSelect(selectedIndex) {
+            if (questionAnswered) return;
+
+            const q = quizData[currentQuestionIndex];
+            const selectedBtn = document.getElementById(`opt-btn-${selectedIndex}`);
+            const feedbackBox = document.getElementById('feedbackBox');
+            const feedbackEmoji = document.getElementById('feedbackEmoji');
+            const feedbackTitle = document.getElementById('feedbackTitle');
+            const feedbackMessage = document.getElementById('feedbackMessage');
+            const nextBtn = document.getElementById('nextBtn');
+
+            if (selectedIndex === q.correctIndex) {
+                // 答對了！
+                questionAnswered = true;
+                selectedBtn.classList.add('option-correct');
+
+                // 鎖定所有按鈕
+                q.options.forEach((_, idx) => {
+                    document.getElementById(`opt-btn-${idx}`).disabled = true;
+                });
+
+                // 頒發金箭獎章
+                goldenArrowsEarned++;
+                const badge = document.getElementById(`badge-${currentQuestionIndex}`);
+                badge.classList.remove('opacity-30', 'grayscale');
+                badge.classList.add('scale-125');
+                setTimeout(() => badge.classList.remove('scale-125'), 400);
+
+                // 播放音效與彩帶
+                playSuccessSound();
+                launchConfetti();
+
+                // 顯示正向嘉許回饋
+                feedbackBox.className = 'mt-6 rounded-2xl p-5 border-2 bg-emerald-50 border-emerald-300 text-emerald-950 animate-pop';
+                feedbackEmoji.textContent = firstTrySuccess ? '🏆' : '🌟';
+                feedbackTitle.textContent = firstTrySuccess ? q.praise : '太好了！經過思考後你成功答對啦！💪';
+                feedbackMessage.textContent = q.explanation;
+
+                nextBtn.classList.remove('hidden');
+                nextBtn.textContent = currentQuestionIndex === quizData.length - 1 ? '查看我的嘉許狀 🎉' : '下一題 ➔';
+
+            } else {
+                // 第一次選錯：不扣分、不發出刺耳聲，給予溫暖鼓勵與小提示讓學生再試一次
+                firstTrySuccess = false;
+                selectedBtn.classList.add('option-retry');
+                selectedBtn.disabled = true;
+
+                playEncourageSound();
+
+                feedbackBox.className = 'mt-6 rounded-2xl p-5 border-2 bg-amber-50 border-amber-300 text-amber-950 animate-pop';
+                feedbackEmoji.textContent = '🤗';
+                feedbackTitle.textContent = '差一點點就答對啦！別氣餒，再試一次！';
+                feedbackMessage.textContent = q.hint;
+                nextBtn.classList.add('hidden'); // 鼓勵學生再點選正確答案
+            }
+        }
+
+        function nextQuestion() {
+            playTone(523.25, 0.1, 'sine');
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                renderQuestion();
+            } else {
+                showResultScreen();
+            }
+        }
+
+        function showResultScreen() {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+
+            playFanfareSound();
+            launchConfetti();
+
+            // 顯示收集到的金箭獎章
+            const arrowsDisplay = document.getElementById('finalArrowsDisplay');
+            arrowsDisplay.innerHTML = '';
+            for (let i = 0; i < goldenArrowsEarned; i++) {
+                const span = document.createElement('span');
+                span.textContent = '🏹';
+                span.className = 'animate-bounce';
+                span.style.animationDelay = `${i * 0.15}s`;
+                arrowsDisplay.appendChild(span);
+            }
+
+            document.getElementById('finalScoreText').textContent = `全數收集 ${goldenArrowsEarned} / ${quizData.length} 枝金箭獎章！`;
+        }
+
+        function restartGame() {
+            startGame();
+        }
+    </script>
+</body>
+</html>
